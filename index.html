@@ -545,7 +545,7 @@ canvas {
 			});
 
 			// Add a coin between the pipes with a 30% chance
-			if (Math.random() < 0.3) {
+			if (Math.random() < 0.35) {
 				const coinY = gapOpeningPosition + (barGap - coinHeight) / 2; // Center the coin in the gap
 				const coinX = canvas.width + (pipeWidth / 2) - (coinWidth / 2); // Center the coin horizontally
 				coins.push({
@@ -869,7 +869,7 @@ function startGame() {
     // Update score and start the game loop
     updateScore();
     update();
-    barCreationInterval = setInterval(createBars, 4000/gamespeedmodifier);
+    barCreationInterval = setInterval(createBars, 2000/gamespeedmodifier);
     barSpeedIncreaseInterval = setInterval(increaseBarSpeed, 5000);
     speedUpdateInterval = setInterval(updateSpeed, 5000);
 }
