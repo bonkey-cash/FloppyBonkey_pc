@@ -1001,35 +1001,30 @@ function gameOver() {
 
 
 function submitHighscore(username, score) {
-    PlayFabClientSDK.UpdatePlayerStatistics({
-        Statistics: [{
-            StatisticName: "Highscore",
-            Value: score
-        }]
+    // Set the display name (username) for the player
+    PlayFabClientSDK.UpdateUserTitleDisplayName({
+        DisplayName: username // Set the player's username
     }, function (result) {
-        console.log("Highscore submitted successfully:", result);
+        console.log("Username submitted successfully:", result);
+
+        // Then update the player's statistics
+        PlayFabClientSDK.UpdatePlayerStatistics({
+            Statistics: [{
+                StatisticName: "Highscore",
+                Value: score
+            }]
+        }, function (result) {
+            console.log("Highscore submitted successfully:", result);
+        }, function (error) {
+            console.error("Error submitting highscore:", error);
+        });
+
     }, function (error) {
-        console.error("Error submitting highscore:", error);
+        console.error("Error submitting username:", error);
     });
 }
 
-/*function fetchHighscores() {
-    PlayFabClient.GetLeaderboard({ StartPosition: 0, MaxResultsCount: 10 }, (result) => {
-        console.log(result); // Log the API response for debugging
 
-        const leaderboardData = result.data.Leaderboard;
-
-        if (leaderboardData && leaderboardData.length > 0) {
-            leaderboardData.forEach(entry => {
-                console.log(`${entry.Position + 1}: ${entry.DisplayName} - ${entry.StatValue}`);
-            });
-        } else {
-            console.log('No leaderboard data available.');
-        }
-    }, (error) => {
-        console.error('Error fetching leaderboard:', error);
-    });
-}*/
 
 function fetchHighscores() {
     PlayFabClientSDK.GetLeaderboard({
@@ -1055,26 +1050,6 @@ function fetchHighscores() {
         console.error("Error fetching leaderboard:", error);
     });
 }
-
-
-/*function fetchHighscores() {
-    PlayFabClientSDK.GetLeaderboard({
-        StatisticName: "Highscore",
-        StartPosition: 0,
-        MaxResultsCount: 10
-    }, function (result) {
-        const scores = result.Leaderboard;
-        const highscoreList = document.getElementById('highscoreList');
-        highscoreList.innerHTML = '';
-        scores.forEach((entry, index) => {
-            const scoreItem = document.createElement('p');
-            scoreItem.textContent = `${index + 1}. ${entry.DisplayName || entry.PlayFabId}: ${entry.StatValue}`;
-            highscoreList.appendChild(scoreItem);
-        });
-    }, function (error) {
-        console.error("Error fetching highscores:", error);
-    });
-}*/
 
 
 document.getElementById('highscoreButton').addEventListener('click', () => {
