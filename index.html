@@ -64,14 +64,14 @@ canvas {
     font-size: 24px; /* Adjust the font size as needed */
     text-align: center; /* Center align the text */
 	}
-    #tweetScoreButton { top: 15%; background-color: #a7ccf4; color: #000; }
-    #startButton { top: 30%; background-color: #a7ccf4; color: #000; }
-    #muteButton { top: 90%; background-color: #ff0000; }
+    #tweetScoreButton { top: 12.5%; background-color: #a7ccf4; color: #000; }
+    #startButton { top: 25%; background-color: #a7ccf4; color: #000; }
+    #muteButton { top: 87.5%; background-color: #ff0000; }
     #pauseButton { top: 90%; background-color: #a7ccf4; color: #000; }
-    #shopButton { top: 45%; background-color: #a7ccf4; color: #000; }
-    #selectCharacterButton { top: 60%; background-color: #a7ccf4; color: #000; }
+    #shopButton { top: 37.5%; background-color: #a7ccf4; color: #000; }
+    #selectCharacterButton { top: 50%; background-color: #a7ccf4; color: #000; }
     #clearCacheButton { top: 75%; background-color: #ffec00; color: black; }
-    #highscoreButton { top: 90%; background-color: #ff0000; }
+    #highscoreButton { top: 62.5%; background-color: #a7ccf4; color: #000; }
 
     #scoreText, #coinText {
         position: absolute;
@@ -147,11 +147,11 @@ canvas {
             padding: 8px 16px;
         }
 
-        #startButton { top: 30%; }
-        #shopButton { top: 45%; }
-        #selectCharacterButton { top: 60%; }
+        #startButton { top: 25%; }
+        #shopButton { top: 37.5%; }
+        #selectCharacterButton { top: 50%; }
         #clearCacheButton { top: 75%; }
-        #highscoreButton { top: 90%; }
+        #highscoreButton { top: 62.5%; }
     }
 
     .modal {
@@ -219,6 +219,7 @@ canvas {
         max-width: 400px;
         max-height: 80%;
         overflow-y: auto;
+		color: #000;
         background-color: #fff;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         padding: 20px;
@@ -229,7 +230,7 @@ canvas {
 
     #highscoreModal img {
         width: 150px;
-        height: 150px;
+        height: 170px;
         margin: 10px;
         cursor: pointer;
     }
@@ -295,7 +296,7 @@ canvas {
         <button id="startButton">Start Game</button>
         <button id="shopButton">Shop</button>
         <button id="selectCharacterButton">Select Character</button>
-        <button id="highscoreButton" style="display: none;" disabled>Leaderboard</button>
+        <button id="highscoreButton">Leaderboard</button>
         <button id="pauseButton" style="display:none;">Pause</button>
         <button id="muteButton">Mute</button>
         <button id="clearCacheButton">Clear Cache</button>
@@ -477,12 +478,18 @@ canvas {
         function drawCoin(coin) {
             ctx.drawImage(coinImage, coin.x, coin.y, coin.width, coin.height);
         }
-        const coinSound = new Audio(''); // Replace with the correct path to your MP3 file
+        const coinSound = new Audio(); // Replace with the correct path to your MP3 file
+		coinSound.src = 'coin.mp3';
+		const jumpSound = new Audio(); // Replace with the correct path to your MP3 file
+		jumpSound.src = 'flap01.mp3';
         const backgroundMusic = new Audio(''); // Replace with the correct path to your MP3 file
 		backgroundMusic.loop = true; // Loop s://flapthe background music
-		const gameOverSound = new Audio('');
-		const scoreSound = new Audio(''); // Replace with the correct path to your MP3 file
-
+		const collisionSound = new Audio();
+		collisionSound.src = 'collision.mp3';
+		const gameOverSound = new Audio();
+		gameOverSound.src = 'die.mp3';
+		const scoreSound = new Audio(); // Replace with the correct path to your MP3 file
+		scoreSound.src = 'point.mp3';
 
 
 		function clearCanvas() {
@@ -544,7 +551,7 @@ function createTopPipes() {
     });
 	
 	// Add a coin between the pipes with a 100% chance
-			if (Math.random() < 1) {
+			if (Math.random() < 1/3) {
 				const coinY = topPipeY + topPipeHeight + (initialGap - coinHeight) / 2; // Center the coin in the gap
 				const coinX = canvas.width + (topPipeWidth / 2) - (coinWidth / 2); // Center the coin horizontally
 				coins.push({
@@ -555,7 +562,6 @@ function createTopPipes() {
 					collected: false
 				});
 			}
-	console.log("Creating pipes:", pipes.length);
 }
 
 
@@ -665,7 +671,8 @@ function detectCollision() {
 
     // Check for canvas top or bottom collision
     if (turtleTop <= 0 || turtleBottom >= canvas.height - moonSurfaceImage.height) {
-        return true; // Collision detected
+        collisionSound.play();
+		return true; // Collision detected
     }
 
     // Check for pipe collision
@@ -683,7 +690,8 @@ function detectCollision() {
             turtleBottom > pipeTop &&
             turtleTop < pipeBottom
         ) {
-            return true; // Collision detected
+            collisionSound.play();
+			return true; // Collision detected
         }
     }
 
@@ -701,7 +709,7 @@ function detectCollision() {
             coins[i].collected = true;
             //totalCoinsCollected=totalCoinsCollected+500;
 			totalCoinsCollected++;
-            coinSound.play(); // Play sound effect
+            playCoinSound(); // Play sound effect
             updateCoinCount();
             coins.splice(i, 1);
             i--;
@@ -733,7 +741,6 @@ function updateGravityAndLift() {
 // Update function modified to include gravity updates
 function update() {
     if (!gameRunning) return;
-	console.log(`${gameRunning}`);
     // Update gravity and lift
     updateGravityAndLift();
 
@@ -758,10 +765,9 @@ function update() {
 	for (let i = 1; i < pipes.length; i += 2) {
         if (turtle.x > pipes[i].x + pipeWidth && !pipes[i].scored) {
             score++;
-            console.log(`Scoring pipe ${i}, X: ${pipes[i].x}, Scored: ${pipes[i].scored}, Turtle position ${turtle.x},pipeWidth ${pipeWidth}`);
+            //console.log(`Scoring pipe ${i}, X: ${pipes[i].x}, Scored: ${pipes[i].scored}, Turtle position ${turtle.x},pipeWidth ${pipeWidth}`);
 			pipes[i].scored = true;
             updateScore();
-			console.log(`Scoring pipe ${i}, X: ${pipes[i].x}, Scored: ${pipes[i].scored}, Turtle position ${turtle.x},pipeWidth ${pipeWidth}`);
         }
     }
 
@@ -807,11 +813,23 @@ function updatePurchasedCharacters() {
         function jump() {
             turtle.velocity = turtle.lift;
         }
+		
+		function playJumpSound() {
+			jumpSound.pause();  // Stop the current playback
+			jumpSound.currentTime = 0;  // Reset to the beginning
+			jumpSound.play();  // Play the sound
+		}
+		
+		function playCoinSound() {
+			coinSound.pause();  // Stop the current playback
+			coinSound.currentTime = 0;  // Reset to the beginning
+			coinSound.play();  // Play the sound
+		}
 
         function keyDown(e) {
 			if (e.key === ' ' || e.code === 'Space' || e.code === 'ArrowUp' ) {
 				jump();
-				jumpSound.play(); // Play jump sound effect
+				playJumpSound(); // Play jump sound effect
 			}
 			
 		}
@@ -825,7 +843,7 @@ function updatePurchasedCharacters() {
 			// Check if the click is within the canvas bounds
 			if (clickX >= 0 && clickX <= canvas.width && clickY >= 0 && clickY <= canvas.height) {
 				jump();
-				jumpSound.play(); // Play jump sound effect
+				playJumpSound(); // Play jump sound effect
 			}
 		}
 
@@ -836,7 +854,7 @@ function updatePurchasedCharacters() {
 
 			if (touchX >= 0 && touchX <= canvas.width && touchY >= 0 && touchY <= canvas.height) {
 				jump();
-				jumpSound.play(); // Play jump sound effect
+				playJumpSound(); // Play jump sound effect
 			}
 		}
 document.addEventListener('keydown', keyDown);
@@ -936,7 +954,7 @@ function gameOver() {
 	document.getElementById('shopButton').style.display = 'block';
     document.getElementById('muteButton').style.display = 'block';
     document.getElementById('selectCharacterButton').style.display = 'block';
-    document.getElementById('highscoreButton').style.display = 'none';
+    document.getElementById('highscoreButton').style.display = 'block';
     document.getElementById('pauseButton').style.display = 'none'; // Hide the pause button on game over
     document.getElementById('tweetScoreButton').style.display = 'block'; // Show tweet score button
     document.getElementById('startButton').textContent = 'Restart Game';
