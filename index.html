@@ -2,9 +2,11 @@
 <html lang="en">
 <head>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Tiny5&display=swap" rel="stylesheet">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Tiny5&display=swap" rel="stylesheet">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<script src="https://download.playfab.com/PlayFabClientApi.js"></script>
+
     
      <style>
      @font-face {
@@ -367,6 +369,8 @@ canvas {
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
+		PlayFab.settings.titleId = "8115B"; // Replace with your PlayFab Title ID
+
         
         
         
@@ -763,7 +767,7 @@ function update() {
     detectCoinCollection();
 
 	for (let i = 1; i < pipes.length; i += 2) {
-        if (turtle.x > pipes[i].x + pipeWidth && !pipes[i].scored) {
+        if (turtle.x > (pipes[i].x*2/3) && !pipes[i].scored) {
             score++;
             //console.log(`Scoring pipe ${i}, X: ${pipes[i].x}, Scored: ${pipes[i].scored}, Turtle position ${turtle.x},pipeWidth ${pipeWidth}`);
 			pipes[i].scored = true;
@@ -868,6 +872,11 @@ function startGame() {
         document.getElementById('usernameModal').style.display = 'block';
         return; // Prevent starting the game if username is not set
     }
+	
+    // Login to PlayFab with the username
+    loginToPlayFab(username, function () {
+        console.log("Player successfully logged into PlayFab");
+
 
     // Stop any running intervals or timers
 	clearInterval(pipeCreationInterval);
@@ -915,7 +924,29 @@ function startGame() {
 	pipeCreationInterval = setInterval(createTopPipes, 2000);
 	pipeSpeedIncreaseInterval = setInterval(increasePipeSpeed, 5000);
     speedUpdateInterval = setInterval(updateSpeed, 5000);
+	});
+	
+	
 }
+
+
+// Function to handle PlayFab login
+function loginToPlayFab(username, callback) {
+    PlayFabClientSDK.LoginWithCustomID({
+        TitleId: PlayFab.settings.titleId, // Your PlayFab Title ID
+        CustomId: username,
+        CreateAccount: true // Create an account if it doesn't exist
+    }, function (result) {
+        console.log("Logged into PlayFab:", result);
+        if (callback) callback(); // Proceed to start the game
+    }, function (error) {
+        console.error("Error logging into PlayFab:", error);
+        alert("Could not log in to PlayFab. Check your internet connection.");
+    });
+}
+
+
+
 
 
 function increasePipeSpeed() {
@@ -969,78 +1000,44 @@ function gameOver() {
 
 
 function submitHighscore(username, score) {
-    fetch('/wp-content/themes/hello-elementor/save_score.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: `username=${encodeURIComponent(username)}&score=${encodeURIComponent(score)}`
-    })
-    .then(response => response.text())
-    .then(data => {
-        console.log('Highscore submitted:', data);
-        // Optionally, you can fetch the updated leaderboard after submission
-        fetchHighscores();
-    })
-    .catch(error => {
-        console.error('Error submitting highscore:', error);
+    PlayFabClientSDK.UpdatePlayerStatistics({
+        Statistics: [{
+            StatisticName: "Highscore",
+            Value: score
+        }]
+    }, function (result) {
+        console.log("Highscore submitted successfully:", result);
+    }, function (error) {
+        console.error("Error submitting highscore:", error);
     });
 }
 
 
+
 function fetchHighscores() {
-    fetch('/wp-content/themes/hello-elementor/get_scores.php')
-        .then(response => response.json())
-        .then(data => {
-            const scores = data.scores;
-            const totalPlayers = data.total_players;
-
-            const highscoreList = document.getElementById('highscoreList');
-            highscoreList.innerHTML = '';
-
-            const customHighscoreList = document.getElementById('customHighscoreContainer');
-            customHighscoreList.innerHTML = ''; // Clear previous content
-
-            scores.forEach((score, index) => {
-                const scoreItem = document.createElement('p');
-                scoreItem.textContent = `${index + 1}. ${score.username}: ${score.score}`;
-
-                if (index === 0) {
-                    const crownIcon = document.createElement('img');
-                    crownIcon.src = '';
-                    crownIcon.alt = 'crown';
-                    crownIcon.style.width = '22px';
-                    crownIcon.style.height = '22px';
-                    crownIcon.style.verticalAlign = 'middle';
-                    scoreItem.appendChild(crownIcon);
-                }
-
-                highscoreList.appendChild(scoreItem);
-                customHighscoreList.appendChild(scoreItem.cloneNode(true)); // Append to custom highscore list
-            });
-
-            const totalPlayersElement = document.getElementById('totalPlayers');
-            totalPlayersElement.textContent = `Total Players: ${totalPlayers}`;
-        })
-        .catch(error => {
-            console.error('Error fetching highscores:', error);
+    PlayFabClientSDK.GetLeaderboard({
+        StatisticName: "Highscore",
+        StartPosition: 0,
+        MaxResultsCount: 10
+    }, function (result) {
+        const scores = result.Leaderboard;
+        const highscoreList = document.getElementById('highscoreList');
+        highscoreList.innerHTML = '';
+        scores.forEach((entry, index) => {
+            const scoreItem = document.createElement('p');
+            scoreItem.textContent = `${index + 1}. ${entry.DisplayName || entry.PlayFabId}: ${entry.StatValue}`;
+            highscoreList.appendChild(scoreItem);
         });
+    }, function (error) {
+        console.error("Error fetching highscores:", error);
+    });
 }
+
 
 document.getElementById('highscoreButton').addEventListener('click', () => {
     fetchHighscores();
-    updateCustomHighscore();
     document.getElementById('highscoreModal').style.display = 'block';
 });
-
-function updateCustomHighscore() {
-    const highscoreList = document.getElementById('customHighscoreContainer');
-    highscoreList.innerHTML = '';
-    fetchHighscores();
-}
-
-
-
 
 
 
