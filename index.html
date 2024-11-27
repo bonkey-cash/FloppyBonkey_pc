@@ -424,19 +424,18 @@ canvas {
 		};
 		
 		const topPipeImage = new Image();
-		topPipeImage.src = 'pixel art top pipe.png';
+		topPipeImage.src = 'pixel art top pipe 4.png';
 
 		const bottomPipeImage = new Image();
-		bottomPipeImage.src = 'pixel art bottom pipe.png';
+		bottomPipeImage.src = 'pixel art bottom pipe 4.png';
 
-
-        const bars = [];
-        const barWidth = 80;
-        let barGap = 200; 
-        let barSpeed = 2*gamespeedmodifier;
+		const pipes = [];
+        const pipeWidth = 64;
+        let pipeGap = 200; 
+        let pipeSpeed = 2*gamespeedmodifier;
         let score = 0;
         let gameRunning = false;
-        let barCreationInterval;
+		let pipeCreationInterval;
         let speedUpdateInterval;
 
         const coins = [];
@@ -451,7 +450,7 @@ canvas {
         function resizeCanvas() {
 			canvas.width = canvas.clientWidth; // Keep width dynamic
 			canvas.height = canvas.clientHeight; // Update height dynamically
-            barGap = 200;
+			pipeGap = 200;
         }
 
         window.addEventListener('resize', resizeCanvas);
@@ -490,7 +489,7 @@ canvas {
 			ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear entire canvas
 
 			// Redraw the background
-			backgroundX -= barSpeed * 0.25;
+			backgroundX -= pipeSpeed * 0.25;
 			if (backgroundX <= -canvas.width) {
 				backgroundX = 0;
 			}
@@ -498,7 +497,7 @@ canvas {
 			ctx.drawImage(backgroundImage, backgroundX + canvas.width, 0, canvas.width, canvas.height);
 
 			// Add scrolling effect for the moon surface
-			moonSurfaceX -= barSpeed * 0.5; // Move the moon surface to the left
+			moonSurfaceX -= pipeSpeed * 0.5; // Move the moon surface to the left
 			if (moonSurfaceX <= -canvas.width) {
 				moonSurfaceX = 0; // Reset position to create a seamless loop
 			}
@@ -507,47 +506,47 @@ canvas {
 		}
 
 
+function createTopPipes() {
+    const topPipeHeight = topPipeImage.height; // Height of the top pipe image
+    const topPipeWidth = topPipeImage.width; // Width of the top pipe image
+	const bottomPipeHeight = bottomPipeImage.height; // Height of the bottom pipe image
+    const bottomPipeWidth = bottomPipeImage.width; // Width of the bottom pipe image
+    const moonSurfaceHeight = moonSurfaceImage.height; // Height of the moon surface image
+    const initialGap = 200; // The initial gap size between pipes
 
-        
-        
+    // Calculate the range for the bottom of the top pipe
+    const minTopPipeHeight = 100; // Minimum Y position from the top of the canvas
+    const maxTopPipeHeight = canvas.height - (initialGap + 1.5 * moonSurfaceHeight); // Maximum Y position
 
-		function createBars() {
-			const pipeWidth = topPipeImage.width; // Use the actual pipe image width
-			const minBarHeight = 60; // Minimum height for a pipe
-			const initialGap = 200; // Initial gap between pipes
-			const scoreMultiplier = 0.05/gamespeedmodifier; // Rate of gap decrease per score
-			const minGapSize = 100; // Minimum gap size to ensure the game is not impossible
+    // Generate a random Y position for the bottom of the top pipe within the range
+    const topPipeY = Math.random() * (maxTopPipeHeight - minTopPipeHeight) + minTopPipeHeight - topPipeHeight;
+    const topPipeX = canvas.width; // Start at the right edge of the screen
+	const bottomPipeX = canvas.width; // Start at the right edge of the screen
+	const bottomPipeY = topPipeY + topPipeHeight + initialGap;
 
-			// Calculate the progressive gap size based on the score
-			barGap = Math.max(initialGap - score * scoreMultiplier, minGapSize);
+    // Create the top pipe
+    pipes.push({
+        x: topPipeX,
+        y: topPipeY,
+        width: topPipeWidth,
+        height: topPipeHeight,
+		type: 'top'
+    });
 
-			// Ensure the gap opening position stays within bounds
-			const maxBarHeight = canvas.height - barGap - minBarHeight;
-			const gapOpeningPosition = Math.random() * (maxBarHeight - minBarHeight) + minBarHeight;
-
-			// Top pipe
-			bars.push({
-				x: canvas.width, // Start at the right edge of the canvas
-				y: 0,
-				width: pipeWidth,
-				height: gapOpeningPosition,
-				type: 'top', // Specify this as a top pipe
-				scored: false
-			});
-
-			// Bottom pipe
-			bars.push({
-				x: canvas.width,
-				y: gapOpeningPosition + barGap,
-				width: pipeWidth,
-				height: canvas.height - (gapOpeningPosition + barGap),
-				type: 'bottom' // Specify this as a bottom pipe
-			});
-
-			// Add a coin between the pipes with a 30% chance
-			if (Math.random() < 0.35) {
-				const coinY = gapOpeningPosition + (barGap - coinHeight) / 2; // Center the coin in the gap
-				const coinX = canvas.width + (pipeWidth / 2) - (coinWidth / 2); // Center the coin horizontally
+    // Create the bottom pipe	
+	    pipes.push({
+        x: bottomPipeX,
+        y: bottomPipeY,
+        width: bottomPipeWidth,
+        height: bottomPipeHeight,
+		type: 'bottom',
+        scored: false
+    });
+	
+	// Add a coin between the pipes with a 100% chance
+			if (Math.random() < 1) {
+				const coinY = topPipeY + topPipeHeight + (initialGap - coinHeight) / 2; // Center the coin in the gap
+				const coinX = canvas.width + (topPipeWidth / 2) - (coinWidth / 2); // Center the coin horizontally
 				coins.push({
 					x: coinX,
 					y: coinY,
@@ -556,21 +555,31 @@ canvas {
 					collected: false
 				});
 			}
-		}
+	console.log("Creating pipes:", pipes.length);
+}
 
 
 
-		function drawBars() {
-			bars.forEach(bar => {
-				if (bar.type === 'top') {
-					// Draw the top pipe
-					ctx.drawImage(topPipeImage, bar.x, bar.y, bar.width, bar.height);
-				} else if (bar.type === 'bottom') {
-					// Draw the bottom pipe
-					ctx.drawImage(bottomPipeImage, bar.x, bar.y, bar.width, bar.height);
-				}
-			});
-		}
+// Function to draw the top pipes
+function drawTopPipes() {
+    pipes.forEach(pipe => {
+        if (pipe.type === 'top') {
+            // Draw the top pipe
+            ctx.drawImage(topPipeImage,pipe.x,pipe.y,pipe.width,pipe.height);
+        } else if (pipe.type === 'bottom') {
+            // Draw the bottom pipe
+            ctx.drawImage(bottomPipeImage,pipe.x,pipe.y,pipe.width,pipe.height);
+        }
+		// Draw the red collision box
+        //ctx.strokeStyle = 'red'; // Set stroke color
+        //ctx.lineWidth = 2; // Line thickness for visibility
+        //ctx.strokeRect(pipe.x, pipe.y, pipe.width, pipe.height); // Draw rectangle
+    });
+}       
+        
+
+
+
 
 
 		document.getElementById('clearCacheButton').addEventListener('click', function() {
@@ -594,7 +603,7 @@ canvas {
         }
 
         function updateSpeed() {
-            barSpeed += 0.1;
+            pipeSpeed += 0.1;
         }
 
         const characterImages = {};
@@ -608,21 +617,23 @@ canvas {
 
         preloadCharacterImages();
 
-		function updateBars() {
-			bars.forEach(bar => {
-				bar.x -= barSpeed; // This already scales with barSpeed
-			});
 
-			// Remove bars that move off-screen
-			if (bars.length && bars[0].x + barWidth < 0) {
-				bars.splice(0, 2);
-			}
-		}
+function updateTopPipes() {
+    pipes.forEach((pipe, index) => {
+        pipe.x -= pipeSpeed; // Move the pipe to the left
+
+        // Check if the pipe is completely offscreen
+        if (pipe.x + pipe.width < 0) {
+            pipes.splice(index, 1); // Remove the pipe from the array
+        }
+    });
+}
+
 
 
 		function updateCoins() {
 			coins.forEach(coin => {
-				coin.x -= barSpeed; // This also scales with barSpeed
+				coin.x -= pipeSpeed; // This also scales with pipeSpeed
 			});
 
 			// Remove coins that move off-screen
@@ -647,29 +658,38 @@ function detectCollision() {
     const turtleTop = turtle.y + turtle.height * 0.25; // Top side of the turtle (25% inward)
     const turtleBottom = turtle.y + turtle.height * 0.75; // Bottom side of the turtle (75% inward)
 
+    // Draw turtle collision box for debugging
+    //ctx.strokeStyle = 'red';
+    //ctx.lineWidth = 2;
+    //ctx.strokeRect(turtleLeft, turtleTop, turtleRight - turtleLeft, turtleBottom - turtleTop);
+
     // Check for canvas top or bottom collision
     if (turtleTop <= 0 || turtleBottom >= canvas.height - moonSurfaceImage.height) {
         return true; // Collision detected
     }
 
-    // Check for bar collision
-    for (let i = 0; i < bars.length; i++) {
-        const barLeft = bars[i].x;
-        const barRight = bars[i].x + barWidth;
-        const barTop = bars[i].y;
-        const barBottom = bars[i].y + bars[i].height;
+    // Check for pipe collision
+    for (let i = 0; i < pipes.length; i++) {
+        const pipe = pipes[i];
+        const pipeLeft = pipe.x;
+        const pipeRight = pipe.x + pipe.width;
+        const pipeTop = pipe.y;
+        const pipeBottom = pipe.y + pipe.height;
 
-        // Check for top and bottom collisions
-        if (turtleBottom > barTop && turtleTop < barBottom) {
-            // Check if left or right sides overlap within the bars
-            if (turtleRight > barLeft && turtleLeft < barRight) {
-                return true; // Collision detected
-            }
+        // Check if turtle collides with the pipe
+        if (
+            turtleRight > pipeLeft &&
+            turtleLeft < pipeRight &&
+            turtleBottom > pipeTop &&
+            turtleTop < pipeBottom
+        ) {
+            return true; // Collision detected
         }
     }
 
     return false; // No collision detected
 }
+
 
         function detectCoinCollection() {
     for (let i = 0; i < coins.length; i++) {
@@ -713,17 +733,19 @@ function updateGravityAndLift() {
 // Update function modified to include gravity updates
 function update() {
     if (!gameRunning) return;
-
+	console.log(`${gameRunning}`);
     // Update gravity and lift
     updateGravityAndLift();
 
     clearCanvas();
     drawTurtle();
-    drawBars();
+    // Draw and move top pipes
+    drawTopPipes();
+	
     drawCoins();
     turtle.velocity += turtle.gravity; // Apply the updated gravity
     turtle.y += turtle.velocity;
-    updateBars();
+	updateTopPipes();
     updateCoins();
 
     if (detectCollision()) {
@@ -733,11 +755,13 @@ function update() {
 
     detectCoinCollection();
 
-    for (let i = 0; i < bars.length; i += 2) {
-        if (turtle.x > bars[i].x + barWidth && !bars[i].scored) {
+	for (let i = 1; i < pipes.length; i += 2) {
+        if (turtle.x > pipes[i].x + pipeWidth && !pipes[i].scored) {
             score++;
-            bars[i].scored = true;
+            console.log(`Scoring pipe ${i}, X: ${pipes[i].x}, Scored: ${pipes[i].scored}, Turtle position ${turtle.x},pipeWidth ${pipeWidth}`);
+			pipes[i].scored = true;
             updateScore();
+			console.log(`Scoring pipe ${i}, X: ${pipes[i].x}, Scored: ${pipes[i].scored}, Turtle position ${turtle.x},pipeWidth ${pipeWidth}`);
         }
     }
 
@@ -753,9 +777,9 @@ function updateScore() {
     previousScore = score;
     document.getElementById('scoreText').textContent = 'Score: ' + score;
 }
-        function updateCoinCount() {
-    document.getElementById('coinText').textContent = 'Coins: ' + totalCoinsCollected;
-    localStorage.setItem('coins', totalCoinsCollected); // Save to localStorage
+    function updateCoinCount() {
+		document.getElementById('coinText').textContent = 'Coins: ' + totalCoinsCollected;
+		localStorage.setItem('coins', totalCoinsCollected); // Save to localStorage
 }
 
 
@@ -818,7 +842,8 @@ function updatePurchasedCharacters() {
 document.addEventListener('keydown', keyDown);
 canvas.addEventListener('touchstart', touchStart);
 
-let barSpeedIncreaseInterval;
+let pipeSpeedIncreaseInterval;
+
 function startGame() {
     const username = localStorage.getItem('username');
     if (!username) {
@@ -827,8 +852,8 @@ function startGame() {
     }
 
     // Stop any running intervals or timers
-    clearInterval(barCreationInterval);
-    clearInterval(barSpeedIncreaseInterval);
+	clearInterval(pipeCreationInterval);
+    clearInterval(pipeSpeedIncreaseInterval);
     clearInterval(speedUpdateInterval);
 
     // Reset game parameters
@@ -839,9 +864,9 @@ function startGame() {
     turtle.x = canvas.width / 20;
     turtle.y = canvas.height / 2 - 25;
     turtle.velocity = 0;
-    bars.length = 0;
+	pipes.length = 0;
     coins.length = 0;
-    barSpeed = 2*gamespeedmodifier;
+	pipeSpeed = 2*gamespeedmodifier;
 
     // Reset gravity-related parameters
     currentGravity = initialGravity; // Reset to initial gravity
@@ -869,16 +894,14 @@ function startGame() {
     // Update score and start the game loop
     updateScore();
     update();
-    barCreationInterval = setInterval(createBars, 2000/gamespeedmodifier);
-    barSpeedIncreaseInterval = setInterval(increaseBarSpeed, 5000);
+	pipeCreationInterval = setInterval(createTopPipes, 2000);
+	pipeSpeedIncreaseInterval = setInterval(increasePipeSpeed, 5000);
     speedUpdateInterval = setInterval(updateSpeed, 5000);
 }
 
 
-
-
-function increaseBarSpeed() {
-    barSpeed += 0.2; // Pas de snelheidstoename aan zoals gewenst
+function increasePipeSpeed() {
+    pipeSpeed += 0.2; // Pas de snelheidstoename aan zoals gewenst
 }
 
 document.querySelectorAll('button').forEach(button => {
@@ -900,9 +923,9 @@ function tweetScore() {
 // Show the tweet score button when game over
 function gameOver() {
     gameRunning = false;
-    clearInterval(barCreationInterval);
+	clearInterval(pipeCreationInterval);
     clearInterval(speedUpdateInterval);
-    clearInterval(barSpeedIncreaseInterval);
+	clearInterval(pipeSpeedIncreaseInterval);
     backgroundMusic.pause();
     backgroundMusic.currentTime = 0;
     gameOverSound.play();
@@ -1216,8 +1239,8 @@ function togglePause() {
         gameRunning = true;
         backgroundMusic.play();
         update();
-        barCreationInterval = setInterval(createBars, 2000);
-        barSpeedIncreaseInterval = setInterval(increaseBarSpeed, 5000);
+		pipeCreationInterval = setInterval(createTopPipes, 2000);
+		pipeSpeedIncreaseInterval = setInterval(increasePipeSpeed, 5000);
         speedUpdateInterval = setInterval(updateSpeed, 5000);
         document.getElementById('pauseButton').textContent = 'Pause';
     } else {
@@ -1225,8 +1248,8 @@ function togglePause() {
         isPaused = true;
         gameRunning = false;
         backgroundMusic.pause();
-        clearInterval(barCreationInterval);
-        clearInterval(barSpeedIncreaseInterval);
+		clearInterval(pipeCreationInterval);
+		clearInterval(pipeSpeedIncreaseInterval);
         clearInterval(speedUpdateInterval);
         document.getElementById('pauseButton').textContent = 'Resume';
     }
