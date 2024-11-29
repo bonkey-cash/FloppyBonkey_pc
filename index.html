@@ -571,14 +571,14 @@ function drawPipes() {
         ctx.drawImage(bottomPipeImage, pipe.x, pipe.bottom.y, pipe.bottom.width, pipe.bottom.height);
 
         // Debugging: Draw the collision boxes
-        ctx.strokeStyle = 'red';
-        ctx.lineWidth = 2;
+        //ctx.strokeStyle = 'red';
+        //ctx.lineWidth = 2;
 
         // Top pipe collision box
-        ctx.strokeRect(pipe.x, pipe.top.y, pipe.top.width, pipe.top.height);
+        //ctx.strokeRect(pipe.x, pipe.top.y, pipe.top.width, pipe.top.height);
 
         // Bottom pipe collision box
-        ctx.strokeRect(pipe.x, pipe.bottom.y, pipe.bottom.width, pipe.bottom.height);
+        //ctx.strokeRect(pipe.x, pipe.bottom.y, pipe.bottom.width, pipe.bottom.height);
     });
 }
 
@@ -658,9 +658,9 @@ function detectCollision() {
     const turtleBottom = turtle.y + turtle.height * 0.75;
 
     // Draw turtle collision box for debugging
-    ctx.strokeStyle = 'red';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(turtleLeft, turtleTop, turtleRight - turtleLeft, turtleBottom - turtleTop);
+    //ctx.strokeStyle = 'red';
+    //ctx.lineWidth = 2;
+    //ctx.strokeRect(turtleLeft, turtleTop, turtleRight - turtleLeft, turtleBottom - turtleTop);
 
     // Canvas boundary collision
     if (turtleTop <= 0 || turtleBottom >= canvas.height - moonSurfaceImage.height) {
